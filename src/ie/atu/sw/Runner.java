@@ -8,10 +8,25 @@ import java.util.ArrayList;
 import java.io.File;
 import java.io.FileNotFoundException;
 
+
+/**
+ * The Runner class is the entry point for the sentiment analysis application.
+ * It handles user interactions and orchestrates the loading of lexicon data and Twitter data,
+ * as well as the execution of sentiment analysis.
+ */
+
 public class Runner {
+	// maps words to sentiment scores
     private static final HashMap<String, Integer> lexiconMap = new HashMap<>();
+    // stores tweets for analysis
     private static final List<String> tweets = new ArrayList<>();
 
+    
+    /**
+     * Main method which provides a menu for user interaction.
+     * @param args Arguments passed from the command line (not used).
+     */
+    
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
@@ -74,6 +89,11 @@ public class Runner {
     }
 
     //	boolean for loading in lexicons from hashmap and initialize score, word, parts and line
+    /**
+     * Loads the lexicon data from a specified file path.
+     * @param filePath The path to the lexicon file.
+     * @return Boolean indicating success or failure of loading lexicons.
+     */
     private static Boolean loadLexicon(String filePath) {
         try (Scanner fileScanner = new Scanner(new File(filePath))) {
             while (fileScanner.hasNextLine()) {
@@ -95,6 +115,13 @@ public class Runner {
         }
     }
 
+    
+    /**
+     * Loads Twitter data from a specified file path.
+     * @param filePath The path to the Twitter data file.
+     * @return Boolean indicating success or failure of loading Twitter data.
+     */
+    
     private static Boolean loadTwitterData(String filePath) {
         try (Scanner fileScanner = new Scanner(new File(filePath))) {
             while (fileScanner.hasNextLine()) {
@@ -111,6 +138,12 @@ public class Runner {
         }
     }
 
+    
+    /**
+     * Analyzes the sentiment of loaded tweets and prints out the results.
+     * This method calculates sentiment scores for each tweet and overall statistics.
+     */
+    
     private static void analyzeSentiment() {
         int totalPositive = 0;
         int totalNegative = 0;
