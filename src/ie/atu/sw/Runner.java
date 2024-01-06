@@ -1,15 +1,17 @@
 package ie.atu.sw;
 
 import java.util.Scanner;
+import java.util.concurrent.*;
 import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.concurrent.Callable;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Runner {
-    private static HashMap<String, Integer> lexiconMap = new HashMap<>();
-    private static List<String> tweets = new ArrayList<>();
+    private static final HashMap<String, Integer> lexiconMap = new HashMap<>();
+    private static final List<String> tweets = new ArrayList<>();
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -22,17 +24,28 @@ public class Runner {
             System.out.print("Enter your choice: ");
 
             int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume newline left-over
 
             switch (choice) {
                 case 1:
                     System.out.println("Enter path to lexicon file:");
-                    String lexiconPath = scanner.next();
-                    loadLexicon(lexiconPath);
+                    String lexiconPath = scanner.nextLine();
+                    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+                        scope.fork(() -> loadLexicon(lexiconPath));
+                        scope.join();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                     break;
                 case 2:
                     System.out.println("Enter path to Twitter data file:");
-                    String twitterPath = scanner.next();
-                    loadTwitterData(twitterPath);
+                    String twitterPath = scanner.nextLine();
+                    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+                        scope.fork(() -> loadTwitterData(twitterPath));
+                        scope.join();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                     break;
                 case 3:
                     analyzeSentiment();
@@ -47,32 +60,38 @@ public class Runner {
         }
     }
 
-    private static void loadLexicon(String filePath) {
+    private static Boolean loadLexicon(String filePath) {
         try (Scanner fileScanner = new Scanner(new File(filePath))) {
             while (fileScanner.hasNextLine()) {
                 String line = fileScanner.nextLine();
                 String[] parts = line.split(",");
-                String word = parts[0];
+                String word = parts[0].toLowerCase();
                 int score = Integer.parseInt(parts[1]);
                 lexiconMap.put(word, score);
             }
+            return true;
         } catch (FileNotFoundException e) {
             System.out.println("File not found: " + filePath);
+            return false;
         } catch (Exception e) {
             System.out.println("Error reading file: " + filePath);
+            return false;
         }
     }
 
-    private static void loadTwitterData(String filePath) {
+    private static Boolean loadTwitterData(String filePath) {
         try (Scanner fileScanner = new Scanner(new File(filePath))) {
             while (fileScanner.hasNextLine()) {
                 String tweet = fileScanner.nextLine();
                 tweets.add(tweet);
             }
+            return true;
         } catch (FileNotFoundException e) {
             System.out.println("File not found: " + filePath);
+            return false;
         } catch (Exception e) {
             System.out.println("Error reading file: " + filePath);
+            return false;
         }
     }
 
@@ -81,7 +100,7 @@ public class Runner {
             int sentimentScore = 0;
             String[] words = tweet.split("\\s+");
             for (String word : words) {
-                word = word.toLowerCase(); // normalize the word
+                word = word.toLowerCase(); // Normalize the word
                 if (lexiconMap.containsKey(word)) {
                     sentimentScore += lexiconMap.get(word);
                 }
