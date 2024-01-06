@@ -5,7 +5,6 @@ import java.util.concurrent.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.concurrent.Callable;
 import java.io.File;
 import java.io.FileNotFoundException;
 
@@ -17,15 +16,29 @@ public class Runner {
         Scanner scanner = new Scanner(System.in);
 
         while (true) {
-            System.out.println("1. Load Lexicons");
-            System.out.println("2. Load Twitter Data");
-            System.out.println("3. Analyze Sentiment");
-            System.out.println("4. Exit");
-            System.out.print("Enter your choice: ");
 
+        	//	output menu
+    		System.out.println(ConsoleColour.RED_BOLD);
+    		System.out.println("************************************************************");
+    		System.out.println("*     ATU - Dept. of Computer Science & Applied Physics    *");
+    		System.out.println("*                                                          *");
+    		System.out.println("*             Virtual Threaded Sentiment Analyser          *");
+    		System.out.println("*                                                          *");
+    		System.out.println("************************************************************");
+    		System.out.println("(1) Specify Lexicon path");
+    		System.out.println("(2) Specify Twitter Data path");
+    		System.out.println("(3) Analyze Sentiment");
+    		System.out.println("(4) Quit");
+    		
+    		//	prompt user to respond
+    		System.out.print(ConsoleColour.BLACK_BOLD_BRIGHT);
+    		System.out.print("Select Option [1-4]>");
+    		System.out.println();
+        	
             int choice = scanner.nextInt();
-            scanner.nextLine(); // Consume newline left-over
+            scanner.nextLine(); // read in scanner line
 
+            //	switch statement for menu options
             switch (choice) {
                 case 1:
                     System.out.println("Enter path to lexicon file:");
@@ -60,6 +73,7 @@ public class Runner {
         }
     }
 
+    //	boolean for loading in lexicons from hashmap and initialize score, word, parts and line
     private static Boolean loadLexicon(String filePath) {
         try (Scanner fileScanner = new Scanner(new File(filePath))) {
             while (fileScanner.hasNextLine()) {
@@ -70,9 +84,11 @@ public class Runner {
                 lexiconMap.put(word, score);
             }
             return true;
+            //	catch statements for if issue with reading file 
         } catch (FileNotFoundException e) {
             System.out.println("File not found: " + filePath);
             return false;
+            //  catch statements for if file not found
         } catch (Exception e) {
             System.out.println("Error reading file: " + filePath);
             return false;
@@ -96,17 +112,33 @@ public class Runner {
     }
 
     private static void analyzeSentiment() {
+        int totalPositive = 0;
+        int totalNegative = 0;
+        int totalWords = 0;
+
         for (String tweet : tweets) {
             int sentimentScore = 0;
             String[] words = tweet.split("\\s+");
             for (String word : words) {
                 word = word.toLowerCase(); // Normalize the word
+                totalWords++;
                 if (lexiconMap.containsKey(word)) {
-                    sentimentScore += lexiconMap.get(word);
+                    int score = lexiconMap.get(word);
+                    sentimentScore += score;
+                    if (score > 0) {
+                        totalPositive++;
+                    } else if (score < 0) {
+                        totalNegative++;
+                    }
                 }
             }
             System.out.println("Tweet: " + tweet);
             System.out.println("Sentiment Score: " + sentimentScore);
         }
+
+        System.out.println("Total Positive Words: " + totalPositive);
+        System.out.println("Total Negative Words: " + totalNegative);
+        double scoreFromTotal = (double) (totalPositive - totalNegative) / totalWords;
+        System.out.println("Score from Total (SfT): " + scoreFromTotal);
     }
 }
